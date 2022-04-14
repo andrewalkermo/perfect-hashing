@@ -1,0 +1,7 @@
+.vscode
+src/main
+src/registros
+teste/*
+registros
+main
+out_test.txt

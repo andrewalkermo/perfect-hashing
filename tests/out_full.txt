@@ -1,0 +1,188 @@
+insercao com sucesso: 16
+insercao com sucesso: 18
+insercao com sucesso: 27
+insercao com sucesso: 29
+insercao com sucesso: 11
+insercao com sucesso: 1
+insercao com sucesso: 43
+insercao com sucesso: 45
+insercao com sucesso: 89
+insercao com sucesso: 77
+insercao com sucesso: 55
+0: 29 ana 18
+1: 11 Nat 15
+2: 1 Nat 15
+3: 89 Nat 23
+4: 55 Nat 12
+5: 16 joao 20
+6: 45 Nat 28
+7: 18 maria 30
+8: 77 Nat 44
+9: 27 carlos 15
+10: 43 Nat 25
+chave removida com sucesso: 55
+0: 29 ana 18
+1: 11 Nat 15
+2: 1 Nat 15
+3: 89 Nat 23
+4: *
+5: 16 joao 20
+6: 45 Nat 28
+7: 18 maria 30
+8: 77 Nat 44
+9: 27 carlos 15
+10: 43 Nat 25
+chave removida com sucesso: 16
+0: 29 ana 18
+1: 11 Nat 15
+2: 1 Nat 15
+3: 89 Nat 23
+4: *
+5: *
+6: 45 Nat 28
+7: 18 maria 30
+8: 77 Nat 44
+9: 27 carlos 15
+10: 43 Nat 25
+chave removida com sucesso: 18
+0: 29 ana 18
+1: 11 Nat 15
+2: 1 Nat 15
+3: 89 Nat 23
+4: *
+5: *
+6: 45 Nat 28
+7: *
+8: 77 Nat 44
+9: 27 carlos 15
+10: 43 Nat 25
+chave removida com sucesso: 27
+0: 29 ana 18
+1: 11 Nat 15
+2: 1 Nat 15
+3: 89 Nat 23
+4: *
+5: *
+6: 45 Nat 28
+7: *
+8: 77 Nat 44
+9: *
+10: 43 Nat 25
+chave removida com sucesso: 29
+0: *
+1: 11 Nat 15
+2: 1 Nat 15
+3: 89 Nat 23
+4: *
+5: *
+6: 45 Nat 28
+7: *
+8: 77 Nat 44
+9: *
+10: 43 Nat 25
+chave removida com sucesso: 11
+0: *
+1: *
+2: 1 Nat 15
+3: 89 Nat 23
+4: *
+5: *
+6: 45 Nat 28
+7: *
+8: 77 Nat 44
+9: *
+10: 43 Nat 25
+chave removida com sucesso: 1
+0: *
+1: *
+2: *
+3: 89 Nat 23
+4: *
+5: *
+6: 45 Nat 28
+7: *
+8: 77 Nat 44
+9: *
+10: 43 Nat 25
+chave removida com sucesso: 77
+0: *
+1: *
+2: *
+3: 89 Nat 23
+4: *
+5: *
+6: 45 Nat 28
+7: *
+8: *
+9: *
+10: 43 Nat 25
+chave nao encontrada: 55
+0: *
+1: *
+2: *
+3: 89 Nat 23
+4: *
+5: *
+6: 45 Nat 28
+7: *
+8: *
+9: *
+10: 43 Nat 25
+chave removida com sucesso: 89
+0: *
+1: *
+2: *
+3: *
+4: *
+5: *
+6: 45 Nat 28
+7: *
+8: *
+9: *
+10: 43 Nat 25
+chave removida com sucesso: 45
+0: *
+1: *
+2: *
+3: *
+4: *
+5: *
+6: *
+7: *
+8: *
+9: *
+10: 43 Nat 25
+chave removida com sucesso: 43
+0: *
+1: *
+2: *
+3: *
+4: *
+5: *
+6: *
+7: *
+8: *
+9: *
+10: *
+insercao com sucesso: 16
+insercao com sucesso: 18
+insercao com sucesso: 27
+insercao com sucesso: 29
+insercao com sucesso: 11
+insercao com sucesso: 1
+insercao com sucesso: 43
+insercao com sucesso: 45
+insercao com sucesso: 89
+insercao com sucesso: 77
+insercao com sucesso: 55
+0: 29 ana 18
+1: 11 Nat 15
+2: 1 Nat 15
+3: 89 Nat 23
+4: 55 Nat 12
+5: 16 joao 20
+6: 45 Nat 28
+7: 18 maria 30
+8: 77 Nat 44
+9: 27 carlos 15
+10: 43 Nat 25
