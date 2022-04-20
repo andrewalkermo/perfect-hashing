@@ -1,5 +1,7 @@
 # Hashing Perfeito
 
+[![Tests Status](https://github.com/andrewalkermo/double-hashing/workflows/C%20test/badge.svg?branch=master&event=push)](https://github.com/andrewalkermo/double-hashing/actions?query=workflow%3A%22C+test%22+branch%3Amaster+event%3Apush)
+
 ## Descrição Geral do Trabalho
 
 Neste trabalho deverá ser implementada uma estrutura de armazenamento de registros baseada em hashing perfeito, como descrito no livro de Cormen et al., Introduction to Algorithms. Os campos de cada registro a ser armazenado no arquivo são: uma chave, de valor inteiro não negativo; uma cadeia de caracteres, representando um nome; e um outro valor inteiro não negativo, representando uma idade. O programa irá receber uma sequência de registros e criará uma estrutura em arquivos para acesso a esses dados. O valor primo a ser usado para se criar o conjunto de funções de hashing universal deve ser o menor primo maior do que todas as chaves dos registros. Não haverá chave maior do que 100.
