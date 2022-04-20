@@ -26,6 +26,14 @@ O formato da saída desta operação será semelhante (mas não igual) ao da ope
 A partir da próxima linha será apresentada a tabela em si. Somente devem aparecer os índices da tabela em que tiver havido chave associada a ela pela função de hashing do nível. Devem ser apresentadas as entradas em ordem crescente de índice. Para cada índice, deve-se gerar em uma linha: o número do índice, seguido de dois pontos (’:’), seguido de um espaço, seguido da chave associada àquele índice.
 5. **imprime estrutura global**: esta operação conterá apenas uma linha, contendo a letra ’h’.
 A saída dessa operação será da seguinte forma. inicialmente será apresentado o primeiro nível, como descrito para a operação imprime primeiro nível da estrutura de hashing. Em seguida, deverão ser apresentadas as estruturas de cada nível em que houver chaves, seguindo a descrição da operação imprime segundo nível da estrutura de hashing.
-1. **cardinalidade do conjunto de funções de hashing universal**: esta operação conterá apenas uma linha, contendo a letra ’n’.
+6. **cardinalidade do conjunto de funções de hashing universal**: esta operação conterá apenas uma linha, contendo a letra ’n’.
 Essa operação deve indicar o número total de funções que existem no conjunto de funções de hashing universal utilizado.
 7. **término da sequência de comandos**: a sequência de comandos será terminada por uma linha com a letra ’e’.
+
+## Observações
+
+- O programa deve manter as atualizações em arquivo. A correção levará em consideração que o estado dos dados é persistente. Com isto, um teste pode ser feito, por exemplo, inserindo-se um registro, terminando a execução do programa e fazendo uma consulta ao registro em nova invocação do programa. Neste caso o registro deve ainda estar no arquivo.
+- Lembre-se de que é assumido que a memória principal é insuficiente para armazenar todos os dados. Portanto, por exemplo, uma implementação que mantém a estrutura do arquivo em memória principal e a salva por completo no arquivo será considerada inaceitável.
+- Os arquivos devem ser armazenados em formato binário.
+- O programa não deve gerar nenhum caractere a mais na saída, além dos indicados acima. Em particular, o programa não deve conter menus.
+- Não pode haver espaço entre linhas na saída. A saída deve apresentar os caracteres em letras minúsculas.
