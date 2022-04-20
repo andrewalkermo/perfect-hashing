@@ -9,4 +9,5 @@ for input in tests/*.in; do
 done
 rm -f registros
 rm -f test.out
+rm -f main
 return $result
