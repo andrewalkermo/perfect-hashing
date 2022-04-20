@@ -208,8 +208,14 @@ void mediaDeAcessos(){
 }
 
 void inicializarArquivo(){
+  FILE *arquivo;
+  if (arquivo = fopen(FILE_NAME, "r")) {
+    fclose(arquivo);
+    return;
+  }
+
   int i;
-  FILE *arquivo = abreArquivo(FILE_NAME, "w+");
+  arquivo = abreArquivo(FILE_NAME, "w+");
   Registro registro;
   registro.status = STATUS_LIVRE;
   
