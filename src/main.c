@@ -1,243 +1,280 @@
+#include <math.h>
+#include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 #define TAMANHO_NOME 20
-#define MAXNUMREGS 11
+#define VALOR_MAXIMO_CHAVE 100
+#define NOME_ARQUIVO_FUNCOES "data_funcoes_hashing.bin"
 
-#define INSERE_REGISTRO 'i'
+#define INSERE_REGISTROS 'i'
 #define CONSULTA_REGISTRO 'c'
-#define REMOVE_REGISTRO 'r'
-#define IMPRIME_ARQUIVO 'p'
-#define MEDIA_DE_ACESSOS 'm'
+#define IMPRIME_NIVEL_UM 'p'
+#define IMPRIME_NIVEL_DOIS 's'
+#define IMPRIME_ESTRUTURA_GLOBAL 'h'
+#define CARDINALIDADE_FUNCOES_HASHING 'n'
 #define FIM_DOS_COMANDOS 'e'
 
-#define FILE_NAME "registros"
+typedef struct DadosUsuario DadosUsuario;
+typedef struct NivelUm NivelUm;
+typedef struct NivelDois NivelDois;
+typedef struct Registro Registro;
 
-#define STATUS_OCUPADO 1
-#define STATUS_LIVRE 0
-#define STATUS_REMOVIDO -1
+struct NivelUm{
+  int tamanho;
+  int primo;
+  int a;
+  int b;
+};
+struct NivelDois{
+  int tamanho;
+  int a;
+  int b;
+};
 
-int totalAcessosComSucesso = 0;
-int totalAcessosComFalha = 0;
-int totalConsultasComSucesso = 0;
-int totalConsultasComFalha = 0;
-
-typedef struct {
+struct DadosUsuario{
   int chave;
   char nome[TAMANHO_NOME];
   int idade;
-} DadosUsuario;
+};
 
-typedef struct {
-  int status;
+struct Registro{
+  bool ocupado;
   DadosUsuario dados;
-} Registro;
+};
 
-int hashUm(int chave);
-int hashDois(int chave);
-int max (int a, int b);
-int proximaPosicao(int posicaoAtual, int salto);
+void insere_registros();
+void consulta_registro();
+void imprime_nivel_um();
+void imprime_nivel_dois();
+void imprime_estrutura_global();
+void cardinalidade_funcoes_hashing();
+void cria_arquivo_de_funcoes(int tamanho, int primo);
+void insere_registro(Registro* registro);
 
-void lerComandos();
-void inserirRegistro();
-void consultarRegistro();
-void removerRegistro();
-void imprimirArquivo();
-void mediaDeAcessos();
-void inicializarArquivo();
-void registraSucesso(int acessos);
-void registraFalha(int acessos);
+int proximo_primo(int n);
+int get_numero_aleatorio_entre(int min, int max);
+int hash(int p, int m, int a, int b, int k);
+char* get_nome_arquivo_registros(int posicao);
+char* get_nome_arquivo_registros_temp(int posicao);
 
-FILE *abreArquivo(char *nomeArquivo, char *modo);
+FILE *abre_arquivo(char *nomeArquivo, char *modo);
+FILE* cria_arquivo_de_registros(char* nome, int tamanho);
 
 int main() {
-  inicializarArquivo();
-  lerComandos();
-  return 0;
-}
-
-void lerComandos(){
   char comando;
   while (scanf("%s", &comando)) {
     switch (comando) {
-      case INSERE_REGISTRO:
-        inserirRegistro();
+      case INSERE_REGISTROS:
+        insere_registros();
         break;
       case CONSULTA_REGISTRO:
-        consultarRegistro();
+        consulta_registro();
         break;
-      case REMOVE_REGISTRO:
-        removerRegistro();
+      case IMPRIME_NIVEL_UM:
+        imprime_nivel_um();
         break;
-      case IMPRIME_ARQUIVO:
-        imprimirArquivo();
+      case IMPRIME_NIVEL_DOIS:
+        imprime_nivel_dois();
         break;
-      case MEDIA_DE_ACESSOS:
-        mediaDeAcessos();
+      case IMPRIME_ESTRUTURA_GLOBAL:
+        imprime_estrutura_global();
+        break;
+      case CARDINALIDADE_FUNCOES_HASHING:
+        cardinalidade_funcoes_hashing();
         break;
       case FIM_DOS_COMANDOS:
-        return;
+        return 0;
       default:
-        exit(-1);
+        printf("Comando inválido\n");
+        return 1;
     }
   }
+  return 0;
 }
 
-void inserirRegistro() {
-  Registro novoRegistro;
-  novoRegistro.status = STATUS_OCUPADO;
-  scanf("%d", &novoRegistro.dados.chave);
-  scanf("%s", novoRegistro.dados.nome);
-  scanf("%d", &novoRegistro.dados.idade);
-
-  Registro registro;
-  FILE *arquivo = abreArquivo(FILE_NAME, "r+");
-  int posicao = hashUm(novoRegistro.dados.chave);
-  int acessos = 0;
-  
-  do {
-    acessos++;
-    fseek(arquivo, posicao * sizeof(Registro), SEEK_SET);
-    fread(&registro, sizeof(Registro), 1, arquivo);
-
-    if (registro.status != STATUS_OCUPADO) {
-      fseek(arquivo, posicao *sizeof(Registro), SEEK_SET);
-      fwrite(&novoRegistro, sizeof(Registro), 1, arquivo);
-      printf("insercao com sucesso: %d\n", novoRegistro.dados.chave);
-      fclose(arquivo);
-      registraSucesso(acessos);
-      return;
-    } else if (registro.dados.chave == novoRegistro.dados.chave) {
-      printf("chave ja existente: %d\n", novoRegistro.dados.chave);
-      fclose(arquivo);
-      return;
-      registraFalha(acessos);
-    }
-    
-    posicao = proximaPosicao(posicao, hashDois(novoRegistro.dados.chave));
-  } while (acessos < MAXNUMREGS);
-
-  registraFalha(acessos);
-  printf("insercao de chave sem sucesso - arquivo cheio: %d\n", novoRegistro.dados.chave);
-  fclose(arquivo);
-}
-
-void consultarRegistro() {
-  int chave;
-  scanf("%d", &chave);
-  Registro registro;
-  FILE *arquivo = abreArquivo(FILE_NAME, "r");
-  
-  int posicao = hashUm(chave);
-  int acessos = 0;
-  do {
-    acessos++;
-    fseek(arquivo, posicao * sizeof(Registro), SEEK_SET);
-    fread(&registro, sizeof(Registro), 1, arquivo);
-    
-    if (registro.dados.chave == chave && registro.status == STATUS_OCUPADO) {
-      printf("chave: %d\n", chave);
-      printf("%s\n", registro.dados.nome);
-      printf("%d\n", registro.dados.idade);
-      fclose(arquivo);
-      registraSucesso(acessos);
-      return;
-    }
-    posicao = proximaPosicao(posicao, hashDois(chave));
-  } while (acessos < MAXNUMREGS && registro.status != STATUS_LIVRE);
-
-  totalAcessosComFalha += acessos;
-  totalConsultasComFalha++;
-  printf("chave nao encontrada: %d\n", chave);
-  fclose(arquivo);
-}
-
-void removerRegistro(){
-  int chave;
-  scanf("%d", &chave);
-  Registro registro;
-  FILE *arquivo = abreArquivo(FILE_NAME, "r+");
-  
-  int posicao = hashUm(chave);
-  int acessos = 0;
-  do {
-    acessos++;
-    fseek(arquivo, posicao * sizeof(Registro), SEEK_SET);
-    fread(&registro, sizeof(Registro), 1, arquivo);
-    
-    if (registro.dados.chave == chave && registro.status != STATUS_REMOVIDO) {
-      registro.status = STATUS_REMOVIDO;
-      fseek(arquivo, posicao * sizeof(Registro), SEEK_SET);
-      fwrite(&registro, sizeof(Registro), 1, arquivo);
-      printf("chave removida com sucesso: %d\n", chave);
-      fclose(arquivo);
-      registraSucesso(acessos);
-      return;
-    }
-
-    posicao = proximaPosicao(posicao, hashDois(chave));
-  } while (acessos < MAXNUMREGS && registro.status != STATUS_LIVRE);
-
-  printf("chave nao encontrada: %d\n", chave);
-  fclose(arquivo);
-  registraFalha(acessos);
-}
-
-void imprimirArquivo(){
-  int i;
-  Registro registro;
-  FILE *arquivo = abreArquivo(FILE_NAME, "r");
-  
-  for (i = 0; i < MAXNUMREGS; i++) {
-    fread (&registro, sizeof (Registro), 1, arquivo);
-    if (registro.status == STATUS_OCUPADO) {
-      printf("%d: %d %s %d\n", i, registro.dados.chave, registro.dados.nome, registro.dados.idade);
-    } else if (registro.status == STATUS_LIVRE) {
-      printf("%d: vazio\n", i);
-    } else {
-      printf("%d: *\n", i);
-    }
-  }
-  
-  fclose(arquivo);
-}
-
-void mediaDeAcessos(){
-  printf("%0.1f\n", (float) totalAcessosComSucesso / totalConsultasComSucesso);
-  printf("%0.1f\n", (float) totalAcessosComFalha / totalConsultasComFalha);
-}
-
-void inicializarArquivo(){
+void cria_arquivo_de_funcoes(int tamanho, int primo){
   FILE *arquivo;
-  if (arquivo = fopen(FILE_NAME, "r")) {
-    fclose(arquivo);
-    return;
-  }
+  // if (arquivo = fopen(NOME_ARQUIVO_FUNCOES, "r")) {
+  //   fclose(arquivo);
+  //   return;
+  // }
+
+  arquivo = abre_arquivo(NOME_ARQUIVO_FUNCOES, "w+");
+
+  NivelUm nivelUm;
+  nivelUm.tamanho = tamanho;
+  nivelUm.primo = primo;
+  nivelUm.a = get_numero_aleatorio_entre(0, primo);
+  nivelUm.b = get_numero_aleatorio_entre(1, primo);
+  fwrite(&nivelUm, sizeof(NivelUm), 1, arquivo);
 
   int i;
-  arquivo = abreArquivo(FILE_NAME, "w+");
-  Registro registro;
-  registro.status = STATUS_LIVRE;
+  NivelDois nivelDois;
+  nivelDois.tamanho = 0;
+  nivelDois.a = 0;
+  nivelDois.b = 0;
   
-  for (i = 0; i < MAXNUMREGS; i++) {
-    fwrite(&registro, sizeof(Registro), 1, arquivo);
+  for (i = 0; i < tamanho; i++) {
+    fwrite(&nivelDois, sizeof(NivelDois), 1, arquivo);
   }
   fclose(arquivo);
 }
 
-int hashUm(int chave){
-  return chave % MAXNUMREGS;
+void insere_registros() {
+  int tamanho;
+  scanf("%d", &tamanho);
+
+  int i;
+  for (i = 0; i < tamanho; i++) {
+    Registro novoRegistro;
+    novoRegistro.ocupado = true;
+    scanf("%d", &novoRegistro.dados.chave);
+    if (i == 0) {
+      int primo = proximo_primo(novoRegistro.dados.chave);
+      cria_arquivo_de_funcoes(tamanho, primo);
+    }
+    
+    scanf("%s", novoRegistro.dados.nome);
+    scanf("%d", &novoRegistro.dados.idade);
+    insere_registro(&novoRegistro);
+  }
+  printf("estrutura de hashing perfeito criada\n");
 }
 
-int hashDois(int chave){
-  return max((chave / MAXNUMREGS) % MAXNUMREGS, 1);
+void insere_registro(Registro* registro) {
+  FILE *arquivo_funcoes_hash;
+  NivelUm nivelUm;
+  
+  arquivo_funcoes_hash = abre_arquivo(NOME_ARQUIVO_FUNCOES, "r+");
+  fread(&nivelUm, sizeof(NivelUm), 1, arquivo_funcoes_hash);
+  int posicao = hash(nivelUm.primo, nivelUm.tamanho, nivelUm.a, nivelUm.b, registro->dados.chave);
+
+  NivelDois nivelDois;
+  fseek(arquivo_funcoes_hash, sizeof(NivelUm) + sizeof(NivelDois) * posicao, SEEK_SET);
+  fread(&nivelDois, sizeof(NivelDois), 1, arquivo_funcoes_hash);
+  
+  if (nivelDois.tamanho == 0) {
+    printf("POSICAO: %d - CHAVE: %d - A: %d - B: %d\n", posicao, registro->dados.chave, nivelUm.a, nivelUm.b);
+    nivelDois.tamanho = 1;
+    fseek(arquivo_funcoes_hash, sizeof(NivelUm) + sizeof(NivelDois) * posicao, SEEK_SET);
+    fwrite(&nivelDois, sizeof(NivelDois), 1, arquivo_funcoes_hash);
+    fclose(arquivo_funcoes_hash);
+
+    FILE *arquivo_registros;
+    
+    arquivo_registros = cria_arquivo_de_registros(get_nome_arquivo_registros(posicao), 1);
+    fwrite(registro, sizeof(Registro), 1, arquivo_registros);
+    fclose(arquivo_registros);
+  } else {
+    
+    // int tamanhoAntigo = nivelDois.tamanho;
+    // nivelDois.tamanho = pow(sqrt(nivelDois.tamanho) + 1, 2);
+
+    // FILE* arquivo_registros_novo = cria_arquivo_de_registros(get_nome_arquivo_registros_temp(posicao), nivelDois.tamanho);
+
+    // bool conflito = false;
+    // do {
+    //   conflito = false;
+    //   nivelDois.a = get_numero_aleatorio_entre(0, nivelUm.primo);
+    //   nivelDois.b = get_numero_aleatorio_entre(1, nivelUm.primo);
+    //   bool chavesAntigas[VALOR_MAXIMO_CHAVE] = {false};
+    //   FILE* arquivo_registros = abre_arquivo(get_nome_arquivo_registros(posicao), "r");
+
+    //   int novaPosicao = hash(nivelUm.primo, nivelDois.tamanho, nivelDois.a, nivelDois.b, registro->dados.chave);
+    //   chavesAntigas[novaPosicao] = true;
+      
+    //   int i;
+    //   for (i = 0; i < tamanhoAntigo; i++)
+    //   {
+    //     Registro registroAMover;
+    //     fread(&registroAMover, sizeof(Registro), 1, arquivo_registros);
+    //     if (registroAMover.ocupado)
+    //     {
+    //       int novaPosicao = hash(nivelUm.primo, nivelDois.tamanho, nivelDois.a, nivelDois.b, registroAMover.dados.chave);
+    //       if (chavesAntigas[novaPosicao])
+    //       {
+    //         conflito = true;
+    //         break;
+    //       }
+    //       chavesAntigas[novaPosicao] = true;
+    //     }
+    //   }
+    //   fclose(arquivo_registros);
+    // } while (conflito);
+    
+    // for (int i = 0; i < tamanhoAntigo; i++)
+    // {
+    //   Registro registroAMover;
+    //   FILE* arquivo_registros = abre_arquivo(get_nome_arquivo_registros(posicao), "r");
+    //   fread(&registro, sizeof(Registro), 1, arquivo_registros);
+    //   if (registroAMover.ocupado == true) {
+    //     int novaPosicao = hash(nivelUm.primo, nivelDois.tamanho, nivelDois.a, nivelDois.b, registroAMover.dados.chave);
+    //     Registro registroAuxiliar;
+    //     fseek(arquivo_registros, sizeof(Registro) * i, SEEK_SET);
+    //     fread(&registroAuxiliar, sizeof(Registro), 1, arquivo_registros);
+    //     if (registroAuxiliar.ocupado == false) {
+    //       fseek(arquivo_registros, sizeof(Registro) * i, SEEK_SET);
+    //       fwrite(&registroAMover, sizeof(Registro), 1, arquivo_registros);
+    //     }
+    //   }
+    //   fwrite(&registro, sizeof(Registro), 1, arquivo_registros);
+    // }
+    
+  
+    // arquivo_registros = cria_arquivo_de_registros(get_nome_arquivo_registros(posicao), nivelDois.tamanho);
+    // fwrite(registro, sizeof(Registro), 1, arquivo_registros);
+    // fclose(arquivo_registros);
+
+    // fwrite(&nivelDois, sizeof(NivelDois), 1, arquivo_funcoes_hash);
+    // fclose(arquivo_funcoes_hash);
+  }
 }
 
-int max (int a, int b){
-  return a > b ? a : b;
+void consulta_registro() {
+  int chave;
+  scanf("%d", &chave);
 }
 
-FILE *abreArquivo(char *nomeArquivo, char *modo){
+void imprime_nivel_um() {
+  FILE* arquivo_funcoes_hash = abre_arquivo(NOME_ARQUIVO_FUNCOES, "r");
+  NivelUm nivelUm;
+  fread(&nivelUm, sizeof(NivelUm), 1, arquivo_funcoes_hash);
+  printf("hashing perfeito: primeiro nivel\n");
+  printf("tamanho da tabela: %d\n", nivelUm.tamanho);
+  printf("parametro a: %d\n", nivelUm.a);
+  printf("parametro b: %d\n", nivelUm.b);
+  printf("numero primo: %d\n", nivelUm.primo);
+  for (int i = 0; i < nivelUm.tamanho; i++) {
+    NivelDois nivelDois;
+    fread(&nivelDois, sizeof(NivelDois), 1, arquivo_funcoes_hash);
+    if (nivelDois.tamanho == 1)
+    {
+      FILE *arquivo_registros = abre_arquivo(get_nome_arquivo_registros(i), "r");
+      Registro registro;
+      fread(&registro, sizeof(Registro), 1, arquivo_registros);
+      if (registro.ocupado)
+      {
+        printf("%d: %d\n", i, registro.dados.chave);
+      }
+    }
+  }
+}
+
+void imprime_nivel_dois() {
+  printf("imprime_nivel_dois\n");
+}
+
+void imprime_estrutura_global() {
+  printf("imprime_estrutura_global\n");
+}
+
+void cardinalidade_funcoes_hashing() {
+  printf("cardinalidade_funcoes_hashing\n");
+}
+
+FILE *abre_arquivo(char *nomeArquivo, char *modo){
   FILE *arquivo;
   if (!(arquivo = fopen(nomeArquivo, modo))) {
     printf("Erro na tentativa de abrir arquivo \"%s\".\n", nomeArquivo);
@@ -246,16 +283,54 @@ FILE *abreArquivo(char *nomeArquivo, char *modo){
   return arquivo;
 }
 
-int proximaPosicao(int posicaoAtual, int salto){
-  return (posicaoAtual + salto) % MAXNUMREGS;
+FILE* cria_arquivo_de_registros(char* nome, int tamanho){
+  FILE *arquivo;
+  
+  // if (arquivo = fopen(nome, "r")) {
+  //   return arquivo;
+  // }
+
+  arquivo = abre_arquivo(nome, "w+");
+  int i;
+  Registro registro;
+  registro.ocupado = false;
+  for (i = 0; i < tamanho; i++) {
+    fwrite(&registro, sizeof(Registro), 1, arquivo);
+  }
+  fseek(arquivo, 0, SEEK_SET);
+  return arquivo;
 }
 
-void registraSucesso(int acessos){
-  totalAcessosComSucesso += acessos;
-  totalConsultasComSucesso++;
+int proximo_primo(int n){
+  int primos[26] = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101};
+  int i;
+  for (i = 0; i < 26; i++) {
+    if (primos[i] > n) {
+      return primos[i];
+    }
+  }
+  printf("Erro: não há mais primos.\n");
+  exit(-1);
 }
 
-void registraFalha(int acessos){
-  totalAcessosComFalha += acessos;
-  totalConsultasComFalha++;
+// retorna um número aleatório n, min <= n < max
+int get_numero_aleatorio_entre(int min, int max) {
+  srand(time(NULL));
+  return (rand() % (max - min)) + min;
+}
+
+int hash(int p, int m, int a, int b, int k) {
+  return ((a * k + b) % p) % m;
+}
+
+char* get_nome_arquivo_registros(int posicao) {
+  char* nomeArquivo = malloc(sizeof(char) * 100);
+  sprintf(nomeArquivo, "data_registros_%d.bin", posicao);
+  return nomeArquivo;
+}
+
+char* get_nome_arquivo_registros_temp(int posicao) {
+  char* nomeArquivo = malloc(sizeof(char) * 100);
+  sprintf(nomeArquivo, "data_registros_%d_tmp.bin", posicao);
+  return nomeArquivo;
 }
