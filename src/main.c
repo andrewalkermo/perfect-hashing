@@ -63,6 +63,8 @@ FILE *abre_arquivo(char *nomeArquivo, char *modo);
 FILE* cria_arquivo_de_registros(char* nome, int tamanho);
 
 int main() {
+  srand(time(NULL));
+  
   char comando;
   while (scanf("%s", &comando)) {
     switch (comando) {
@@ -149,86 +151,88 @@ void insere_registro(Registro* registro) {
   
   arquivo_funcoes_hash = abre_arquivo(NOME_ARQUIVO_FUNCOES, "r+");
   fread(&nivelUm, sizeof(NivelUm), 1, arquivo_funcoes_hash);
-  int posicao = hash(nivelUm.primo, nivelUm.tamanho, nivelUm.a, nivelUm.b, registro->dados.chave);
+  int posicaoNivelUm = hash(nivelUm.primo, nivelUm.tamanho, nivelUm.a, nivelUm.b, registro->dados.chave);
 
   NivelDois nivelDois;
-  fseek(arquivo_funcoes_hash, sizeof(NivelUm) + sizeof(NivelDois) * posicao, SEEK_SET);
+  fseek(arquivo_funcoes_hash, sizeof(NivelUm) + sizeof(NivelDois) * posicaoNivelUm, SEEK_SET);
   fread(&nivelDois, sizeof(NivelDois), 1, arquivo_funcoes_hash);
   
+  printf("LOG - POSICAO NIVEL UM: %d - CHAVE: %d - A: %d - B: %d - PRIMO: %d\n", posicaoNivelUm, registro->dados.chave, nivelUm.a, nivelUm.b, nivelUm.primo);
   if (nivelDois.tamanho == 0) {
-    printf("POSICAO: %d - CHAVE: %d - A: %d - B: %d\n", posicao, registro->dados.chave, nivelUm.a, nivelUm.b);
     nivelDois.tamanho = 1;
-    fseek(arquivo_funcoes_hash, sizeof(NivelUm) + sizeof(NivelDois) * posicao, SEEK_SET);
+    fseek(arquivo_funcoes_hash, sizeof(NivelUm) + sizeof(NivelDois) * posicaoNivelUm, SEEK_SET);
     fwrite(&nivelDois, sizeof(NivelDois), 1, arquivo_funcoes_hash);
     fclose(arquivo_funcoes_hash);
 
     FILE *arquivo_registros;
     
-    arquivo_registros = cria_arquivo_de_registros(get_nome_arquivo_registros(posicao), 1);
+    arquivo_registros = cria_arquivo_de_registros(get_nome_arquivo_registros(posicaoNivelUm), 1);
     fwrite(registro, sizeof(Registro), 1, arquivo_registros);
     fclose(arquivo_registros);
   } else {
     
-    // int tamanhoAntigo = nivelDois.tamanho;
-    // nivelDois.tamanho = pow(sqrt(nivelDois.tamanho) + 1, 2);
+    int tamanhoAntigo = nivelDois.tamanho;
+    nivelDois.tamanho = pow(sqrt(nivelDois.tamanho) + 1, 2);
 
-    // FILE* arquivo_registros_novo = cria_arquivo_de_registros(get_nome_arquivo_registros_temp(posicao), nivelDois.tamanho);
+    //encontra a e b para função de hash que não dê conflito
+    bool conflito = false;
+    do {
+      conflito = false;
+      nivelDois.a = get_numero_aleatorio_entre(0, nivelUm.primo);
+      nivelDois.b = get_numero_aleatorio_entre(1, nivelUm.primo);
+      printf("LOG - TENTANDO NOVA FUNCAO DE HASH - A: %d - B: %d\n", nivelDois.a, nivelDois.b);
+      bool chavesAntigas[VALOR_MAXIMO_CHAVE] = {false};
+      FILE* arquivo_registros = abre_arquivo(get_nome_arquivo_registros(posicaoNivelUm), "r");
+      int posicaoNivelDois = hash(nivelUm.primo, nivelDois.tamanho, nivelDois.a, nivelDois.b, registro->dados.chave);
+      chavesAntigas[posicaoNivelDois] = true;
+      printf("LOG - POSICAO NIVEL DOIS: %d\n", posicaoNivelDois);
+      int i;
+      for (i = 0; i < tamanhoAntigo; i++)
+      {
+        Registro registroAMover;
+        fread(&registroAMover, sizeof(Registro), 1, arquivo_registros);
+        if (registroAMover.ocupado)
+        {
+          int posicaoNivelDois = hash(nivelUm.primo, nivelDois.tamanho, nivelDois.a, nivelDois.b, registroAMover.dados.chave);
+          printf("LOG - POSICAO NIVEL DOIS: %d\n", posicaoNivelDois);
+          if (chavesAntigas[posicaoNivelDois])
+          {
+            conflito = true;
+            break;
+          }
+          chavesAntigas[posicaoNivelDois] = true;
+        }
+      }
+      fclose(arquivo_registros);
+      fprintf(stderr, "LOG - CONFLITO: %d\n", conflito);
+    } while (conflito);
+    printf("LOG - FUNCAO DE HASH ENCONTRADA - A: %d - B: %d\n", nivelDois.a, nivelDois.b);
+    //mover de um arquivo para o outro
+    FILE* arquivo_registros = abre_arquivo(get_nome_arquivo_registros(posicaoNivelUm), "r");
+    FILE* arquivo_registros_novo = cria_arquivo_de_registros(get_nome_arquivo_registros_temp(posicaoNivelUm), nivelDois.tamanho);
+    int posicaoNivelDois;
+    posicaoNivelDois = hash(nivelUm.primo, nivelDois.tamanho, nivelDois.a, nivelDois.b, registro->dados.chave);
+    fseek(arquivo_registros_novo, sizeof(Registro) * posicaoNivelDois, SEEK_SET);
+    fwrite(registro, sizeof(Registro), 1, arquivo_registros_novo);
+    int i;
+    for (i = 0; i < tamanhoAntigo; i++)
+    {
+      Registro registroAMover;
+      fread(&registroAMover, sizeof(Registro), 1, arquivo_registros);
+      if (registroAMover.ocupado == true) {
+        posicaoNivelDois = hash(nivelUm.primo, nivelDois.tamanho, nivelDois.a, nivelDois.b, registroAMover.dados.chave);
+        fseek(arquivo_registros_novo, sizeof(Registro) * i, SEEK_SET);
+        fwrite(&registroAMover, sizeof(Registro), 1, arquivo_registros_novo);
+      }
+    }
+    fclose(arquivo_registros);
+    fclose(arquivo_registros_novo);
+    remove(get_nome_arquivo_registros(posicaoNivelUm));
+    rename(get_nome_arquivo_registros_temp(posicaoNivelUm), get_nome_arquivo_registros(posicaoNivelUm));
 
-    // bool conflito = false;
-    // do {
-    //   conflito = false;
-    //   nivelDois.a = get_numero_aleatorio_entre(0, nivelUm.primo);
-    //   nivelDois.b = get_numero_aleatorio_entre(1, nivelUm.primo);
-    //   bool chavesAntigas[VALOR_MAXIMO_CHAVE] = {false};
-    //   FILE* arquivo_registros = abre_arquivo(get_nome_arquivo_registros(posicao), "r");
-
-    //   int novaPosicao = hash(nivelUm.primo, nivelDois.tamanho, nivelDois.a, nivelDois.b, registro->dados.chave);
-    //   chavesAntigas[novaPosicao] = true;
-      
-    //   int i;
-    //   for (i = 0; i < tamanhoAntigo; i++)
-    //   {
-    //     Registro registroAMover;
-    //     fread(&registroAMover, sizeof(Registro), 1, arquivo_registros);
-    //     if (registroAMover.ocupado)
-    //     {
-    //       int novaPosicao = hash(nivelUm.primo, nivelDois.tamanho, nivelDois.a, nivelDois.b, registroAMover.dados.chave);
-    //       if (chavesAntigas[novaPosicao])
-    //       {
-    //         conflito = true;
-    //         break;
-    //       }
-    //       chavesAntigas[novaPosicao] = true;
-    //     }
-    //   }
-    //   fclose(arquivo_registros);
-    // } while (conflito);
-    
-    // for (int i = 0; i < tamanhoAntigo; i++)
-    // {
-    //   Registro registroAMover;
-    //   FILE* arquivo_registros = abre_arquivo(get_nome_arquivo_registros(posicao), "r");
-    //   fread(&registro, sizeof(Registro), 1, arquivo_registros);
-    //   if (registroAMover.ocupado == true) {
-    //     int novaPosicao = hash(nivelUm.primo, nivelDois.tamanho, nivelDois.a, nivelDois.b, registroAMover.dados.chave);
-    //     Registro registroAuxiliar;
-    //     fseek(arquivo_registros, sizeof(Registro) * i, SEEK_SET);
-    //     fread(&registroAuxiliar, sizeof(Registro), 1, arquivo_registros);
-    //     if (registroAuxiliar.ocupado == false) {
-    //       fseek(arquivo_registros, sizeof(Registro) * i, SEEK_SET);
-    //       fwrite(&registroAMover, sizeof(Registro), 1, arquivo_registros);
-    //     }
-    //   }
-    //   fwrite(&registro, sizeof(Registro), 1, arquivo_registros);
-    // }
-    
-  
-    // arquivo_registros = cria_arquivo_de_registros(get_nome_arquivo_registros(posicao), nivelDois.tamanho);
-    // fwrite(registro, sizeof(Registro), 1, arquivo_registros);
-    // fclose(arquivo_registros);
-
-    // fwrite(&nivelDois, sizeof(NivelDois), 1, arquivo_funcoes_hash);
-    // fclose(arquivo_funcoes_hash);
+    fseek(arquivo_funcoes_hash, sizeof(NivelUm) + sizeof(NivelDois) * posicaoNivelUm, SEEK_SET);
+    fwrite(&nivelDois, sizeof(NivelDois), 1, arquivo_funcoes_hash);
+    fclose(arquivo_funcoes_hash);
   }
 }
 
@@ -249,15 +253,20 @@ void imprime_nivel_um() {
   for (int i = 0; i < nivelUm.tamanho; i++) {
     NivelDois nivelDois;
     fread(&nivelDois, sizeof(NivelDois), 1, arquivo_funcoes_hash);
-    if (nivelDois.tamanho == 1)
+    if (nivelDois.tamanho > 0)
     {
       FILE *arquivo_registros = abre_arquivo(get_nome_arquivo_registros(i), "r");
       Registro registro;
-      fread(&registro, sizeof(Registro), 1, arquivo_registros);
-      if (registro.ocupado)
-      {
-        printf("%d: %d\n", i, registro.dados.chave);
+
+      printf("%d: ", i);
+      int i;
+      for (int i = 0; i < nivelDois.tamanho; i++) {
+        fread(&registro, sizeof(Registro), 1, arquivo_registros);
+        if (registro.ocupado) {
+          printf("%d ", registro.dados.chave);
+        }
       }
+      printf("\n");
     }
   }
 }
@@ -315,7 +324,6 @@ int proximo_primo(int n){
 
 // retorna um número aleatório n, min <= n < max
 int get_numero_aleatorio_entre(int min, int max) {
-  srand(time(NULL));
   return (rand() % (max - min)) + min;
 }
 
