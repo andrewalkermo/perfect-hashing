@@ -1,8 +1,14 @@
 # Hashing Perfeito
 
-[![Tests Status](https://github.com/andrewalkermo/double-hashing/workflows/C%20test/badge.svg?branch=master&event=push)](https://github.com/andrewalkermo/double-hashing/actions?query=workflow%3A%22C+test%22+branch%3Amaster+event%3Apush)
+[![Tests Status](https://github.com/andrewalkermo/perfect-hashing/workflows/C%20test/badge.svg?branch=master&event=push)](https://github.com/andrewalkermo/perfect-hashing/actions?query=workflow%3A%22C+test%22+branch%3Amaster+event%3Apush)
 
-## Descrição Geral do Trabalho
+- [Hashing Perfeito](#hashing-perfeito)
+  - [Formato de Entrada e Saída](#formato-de-entrada-e-saída)
+  - [Observações](#observações)
+  - [Executar o arquivo](#executar-o-arquivo)
+  - [Estrutura de dados](#estrutura-de-dados)
+    - [Inserção de chaves](#inserção-de-chaves)
+      - [Inserção de cada chave](#inserção-de-cada-chave)
 
 Neste trabalho deverá ser implementada uma estrutura de armazenamento de registros baseada em hashing perfeito, como descrito no livro de Cormen et al., Introduction to Algorithms. Os campos de cada registro a ser armazenado no arquivo são: uma chave, de valor inteiro não negativo; uma cadeia de caracteres, representando um nome; e um outro valor inteiro não negativo, representando uma idade. O programa irá receber uma sequência de registros e criará uma estrutura em arquivos para acesso a esses dados. O valor primo a ser usado para se criar o conjunto de funções de hashing universal deve ser o menor primo maior do que todas as chaves dos registros. Não haverá chave maior do que 100.
 
@@ -83,4 +89,14 @@ Os seguintes **n** indices do arquivo contem os dados das funções de hashing d
 
 Não há necessidade de armazenar **primo** porque sempre será o mesmo que já foi armazenado no nivel um.
 
-### Inserção de cada chave
+#### Inserção de cada chave
+
+A cada nova chave que é inserida, primeiro é calculado o índice da chave na tabela de hashing do nível um, onde por ocorrer dois casos:
+
+1. Se for a primeira chave na posição **i**, um arquivo de dados é criado com **tamanho** igual a um, o registro é salvo nesse arquivo e o **tamanho** do registro de indice **i** da tabela de funções de hashing é atualizado para um.
+2. Se não for a primeira chave na posição **i**
+   1. O valor do **tamanho** do registro de indice **i** da tabela de funções de hashing é atualizado para **pow(sqrt(tamanho) + 1, 2)**.
+   2. Um novo arquivo de dados é criado com **tamanho** igual ao valor do **tamanho** do registro de indice **i** da tabela de funções de hashing.
+   3. É escolhido um novo valor de **a** e **b** para o registro de indice **i** da tabela de funções de hashing, que não dê conflito, com o hash usando o novo **tamanho**.
+   4. O novo registro é adicionado ao novo arquivo de registros junto com os registros anteriores.
+   5. O arquivo com os registros anteriores é apagado, E o arquivo com os registros atuais é renomeado para o nome do arquivo anterior.
