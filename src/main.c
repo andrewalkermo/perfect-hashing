@@ -292,28 +292,97 @@ void imprime_nivel_um() {
       Registro registro;
 
       printf("%d: ", i);
-      int i;
-      for (int i = 0; i < nivelDois.tamanho; i++) {
+
+      for (int j = 0; j < nivelDois.tamanho; j++) {
         fread(&registro, sizeof(Registro), 1, arquivo_registros);
         if (registro.ocupado) {
           printf("%d ", registro.dados.chave);
         }
       }
       printf("\n");
+      fclose(arquivo_registros);
     }
   }
+  fclose(arquivo_funcoes_hash);
 }
 
 void imprime_nivel_dois() {
-  printf("imprime_nivel_dois\n");
+  FILE* arquivo_funcoes_hash = abre_arquivo(NOME_ARQUIVO_FUNCOES, "r");
+  NivelUm nivelUm;
+  fread(&nivelUm, sizeof(NivelUm), 1, arquivo_funcoes_hash);
+  for (int i = 0; i < nivelUm.tamanho; i++) {
+    NivelDois nivelDois;
+    fread(&nivelDois, sizeof(NivelDois), 1, arquivo_funcoes_hash);
+    if (nivelDois.tamanho > 0)
+    {
+      if (nivelDois.tamanho > 1) {
+        FILE *arquivo_registros = abre_arquivo(get_nome_arquivo_registros(i), "r");
+        Registro registro;
+        printf("hashing perfeito: segundo nivel - indice: %d\n", i);
+        printf("tamanho da tabela: %d\n", nivelDois.tamanho);
+        printf("parametro a: %d\n", nivelDois.a);
+        printf("parametro b: %d\n", nivelDois.b);
+        printf("numero primo: %d\n", nivelUm.primo);
+        for (int j = 0; j < nivelDois.tamanho; j++) {
+          fread(&registro, sizeof(Registro), 1, arquivo_registros);
+          if (registro.ocupado) {
+            printf("%d: %d\n", j, registro.dados.chave);
+          }
+        }
+        fclose(arquivo_registros);
+      }
+    }
+  }
+  fclose(arquivo_funcoes_hash);
 }
 
 void imprime_estrutura_global() {
-  printf("imprime_estrutura_global\n");
+  FILE* arquivo_funcoes_hash = abre_arquivo(NOME_ARQUIVO_FUNCOES, "r");
+  NivelUm nivelUm;
+  fread(&nivelUm, sizeof(NivelUm), 1, arquivo_funcoes_hash);
+  printf("hashing perfeito: primeiro nivel\n");
+  printf("tamanho da tabela: %d\n", nivelUm.tamanho);
+  printf("parametro a: %d\n", nivelUm.a);
+  printf("parametro b: %d\n", nivelUm.b);
+  printf("numero primo: %d\n", nivelUm.primo);
+  for (int i = 0; i < nivelUm.tamanho; i++) {
+    NivelDois nivelDois;
+    fread(&nivelDois, sizeof(NivelDois), 1, arquivo_funcoes_hash);
+    if (nivelDois.tamanho > 0)
+    {
+      FILE *arquivo_registros = abre_arquivo(get_nome_arquivo_registros(i), "r");
+      Registro registro;
+      printf("hashing perfeito: segundo nivel - indice: %d\n", i);
+      printf("tamanho da tabela: %d\n", nivelDois.tamanho);
+      printf("parametro a: %d\n", nivelDois.a);
+      printf("parametro b: %d\n", nivelDois.b);
+      printf("numero primo: %d\n", nivelUm.primo);
+      for (int j = 0; j < nivelDois.tamanho; j++) {
+        fread(&registro, sizeof(Registro), 1, arquivo_registros);
+        if (registro.ocupado) {
+          printf("%d: %d\n", j, registro.dados.chave);
+        }
+      }
+      fclose(arquivo_registros);
+    }
+  }
+  fclose(arquivo_funcoes_hash);
 }
 
 void cardinalidade_funcoes_hashing() {
-  printf("cardinalidade_funcoes_hashing\n");
+  FILE* arquivo_funcoes_hash = abre_arquivo(NOME_ARQUIVO_FUNCOES, "r");
+  NivelUm nivelUm;
+  fread(&nivelUm, sizeof(NivelUm), 1, arquivo_funcoes_hash);
+  int cardinalidade = 1;
+  for (int i = 0; i < nivelUm.tamanho; i++) {
+    NivelDois nivelDois;
+    fread(&nivelDois, sizeof(NivelDois), 1, arquivo_funcoes_hash);
+    if (nivelDois.tamanho > 1)
+    {
+      cardinalidade++;
+    }
+  }
+  printf("%d\n", cardinalidade);
 }
 
 FILE *abre_arquivo(char *nomeArquivo, char *modo){
