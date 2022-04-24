@@ -60,9 +60,7 @@ Para executar os testes, execute o comando `make test`
 ```bash
 $ make test
 
-gcc -o main src/main.c && ./main < tests/in.txt > out_test.txt && diff -w out_test.txt tests/out.txt && echo "OK" || exit 1
-OK
-gcc -o main src/main.c && ./main < tests/in_full.txt > out_test.txt && diff -w out_test.txt tests/out_full.txt && echo "OK" || exit 1
+sh ./tests/test_main.sh
 OK
 ```
 
