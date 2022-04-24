@@ -37,3 +37,52 @@ Essa operação deve indicar o número total de funções que existem no conjunt
 - Os arquivos devem ser armazenados em formato binário.
 - O programa não deve gerar nenhum caractere a mais na saída, além dos indicados acima. Em particular, o programa não deve conter menus.
 - Não pode haver espaço entre linhas na saída. A saída deve apresentar os caracteres em letras minúsculas.
+
+## Executar o arquivo
+
+Execute o comando `make`
+
+```bash
+$ make
+
+rm -f main
+gcc -o main src/main.c && ./main
+```
+
+ou execute diretamente o arquivo `main.c`:
+
+```bash
+gcc -o main src/main.c && ./main
+```
+
+Para executar os testes, execute o comando `make test`
+
+```bash
+$ make test
+
+gcc -o main src/main.c && ./main < tests/in.txt > out_test.txt && diff -w out_test.txt tests/out.txt && echo "OK" || exit 1
+OK
+gcc -o main src/main.c && ./main < tests/in_full.txt > out_test.txt && diff -w out_test.txt tests/out_full.txt && echo "OK" || exit 1
+OK
+```
+
+## Estrutura de dados
+
+### Inserção de chaves
+
+Quando há uma inserção de **n** chaves, o programa cria um arquivo para armazenar as funções de hashing com tamanho igual a **n+1** Onde o primeiro registro conterá os dados do hash do nivel um que contem as seguintes informações:
+
+- **primo**: menor número primo, maior que o maior valor de chave.
+- **tamanho**: tamanho do arquivo de dados.
+- **a**: número aleatório entre 0 e **primo-1**.
+- **b**: numero aleatório entre 1 e **primo-1**.
+
+Os seguintes **n** indices do arquivo contem os dados das funções de hashing de nivel dois:
+
+- **tamanho**: tamanho do arquivo de dados.
+- **a**: número aleatório entre 0 e **primo-1**.
+- **b**: numero aleatório entre 1 e **primo-1**.
+
+Não há necessidade de armazenar **primo** porque sempre será o mesmo que já foi armazenado no nivel um.
+
+### Inserção de cada chave
