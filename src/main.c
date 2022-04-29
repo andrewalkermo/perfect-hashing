@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#define TAMANHO_NOME 20
+#define TAMANHO_NOME 21
 #define VALOR_MAXIMO_CHAVE 100
 #define NOME_ARQUIVO_FUNCOES "data_funcoes_hashing.bin"
 
@@ -373,15 +373,7 @@ void cardinalidade_funcoes_hashing() {
   FILE* arquivo_funcoes_hash = abre_arquivo(NOME_ARQUIVO_FUNCOES, "r");
   NivelUm nivelUm;
   fread(&nivelUm, sizeof(NivelUm), 1, arquivo_funcoes_hash);
-  int cardinalidade = 1;
-  for (int i = 0; i < nivelUm.tamanho; i++) {
-    NivelDois nivelDois;
-    fread(&nivelDois, sizeof(NivelDois), 1, arquivo_funcoes_hash);
-    if (nivelDois.tamanho > 1)
-    {
-      cardinalidade++;
-    }
-  }
+  int cardinalidade = nivelUm.primo * nivelUm.primo - 1;
   printf("%d\n", cardinalidade);
 }
 
