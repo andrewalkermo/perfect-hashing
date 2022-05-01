@@ -52,10 +52,12 @@ void imprime_estrutura_global();
 void cardinalidade_funcoes_hashing();
 void cria_arquivo_de_funcoes(int tamanho, int primo);
 void insere_registro(Registro* registro);
+void encontra_a_b(NivelUm* nivelUm, NivelDois* nivelDois, Registro* registro, int posicaoNivelUm, int tamanhoAntigo);
 
 int proximo_primo(int n);
 int get_numero_aleatorio_entre(int min, int max);
 int hash(int p, int m, int a, int b, int k);
+
 char* get_nome_arquivo_registros(int posicao);
 char* get_nome_arquivo_registros_temp(int posicao);
 
@@ -113,13 +115,12 @@ void cria_arquivo_de_funcoes(int tamanho, int primo){
 
   fwrite(&nivelUm, sizeof(NivelUm), 1, arquivo);
 
-  int i;
   NivelDois nivelDois;
   nivelDois.tamanho = 0;
-  nivelDois.a = 0;
-  nivelDois.b = 0;
+  nivelDois.a = get_numero_aleatorio_entre(0, primo);
+  nivelDois.b = get_numero_aleatorio_entre(1, primo);
   
-  for (i = 0; i < tamanho; i++) {
+  for (int i = 0; i < tamanho; i++) {
     fwrite(&nivelDois, sizeof(NivelDois), 1, arquivo);
   }
   fclose(arquivo);
@@ -129,16 +130,19 @@ void insere_registros() {
   int tamanho;
   scanf("%d", &tamanho);
 
-  int i;
-  for (i = 0; i < tamanho; i++) {
+  // loop que insere os registros
+  for (int i = 0; i < tamanho; i++) {
     Registro novoRegistro;
     novoRegistro.ocupado = true;
     scanf("%d", &novoRegistro.dados.chave);
     getchar();
+
+    // se for o primeiro registro, cria o arquivo de funções
     if (i == 0) {
       int primo = proximo_primo(novoRegistro.dados.chave);
       cria_arquivo_de_funcoes(tamanho, primo);
     }
+    // lê a linha inteira até o \n
     fgets(novoRegistro.dados.nome, TAMANHO_NOME, stdin);
     
     scanf("%d", &novoRegistro.dados.idade);
@@ -151,91 +155,87 @@ void insere_registro(Registro* registro) {
   FILE *arquivo_funcoes_hash;
   NivelUm nivelUm;
   
+  // abre o arquivo de funções e le a função de hashing de nivel um
   arquivo_funcoes_hash = abre_arquivo(NOME_ARQUIVO_FUNCOES, "r+");
   fread(&nivelUm, sizeof(NivelUm), 1, arquivo_funcoes_hash);
   int posicaoNivelUm = hash(nivelUm.primo, nivelUm.tamanho, nivelUm.a, nivelUm.b, registro->dados.chave);
 
+  // lê a função de hashing de nivel dois
   NivelDois nivelDois;
   fseek(arquivo_funcoes_hash, sizeof(NivelUm) + sizeof(NivelDois) * posicaoNivelUm, SEEK_SET);
   fread(&nivelDois, sizeof(NivelDois), 1, arquivo_funcoes_hash);
   
-  // printf("LOG - POSICAO NIVEL UM: %d - CHAVE: %d - A: %d - B: %d - PRIMO: %d\n", posicaoNivelUm, registro->dados.chave, nivelUm.a, nivelUm.b, nivelUm.primo);
-  if (nivelDois.tamanho == 0) {
-    nivelDois.tamanho = 1;
-    fseek(arquivo_funcoes_hash, sizeof(NivelUm) + sizeof(NivelDois) * posicaoNivelUm, SEEK_SET);
-    fwrite(&nivelDois, sizeof(NivelDois), 1, arquivo_funcoes_hash);
-    fclose(arquivo_funcoes_hash);
+  // salva o tamanho antigo do nivel dois e incrementa o tamanho do nivel dois
+  int tamanhoAntigo = nivelDois.tamanho;
+  nivelDois.tamanho = pow(sqrt(nivelDois.tamanho) + 1, 2);
 
-    FILE *arquivo_registros;
-    
-    arquivo_registros = cria_arquivo_de_registros(get_nome_arquivo_registros(posicaoNivelUm), 1);
-    fwrite(registro, sizeof(Registro), 1, arquivo_registros);
-    fclose(arquivo_registros);
-  } else {
-    
-    int tamanhoAntigo = nivelDois.tamanho;
-    nivelDois.tamanho = pow(sqrt(nivelDois.tamanho) + 1, 2);
+  encontra_a_b(&nivelUm, &nivelDois, registro, posicaoNivelUm, tamanhoAntigo);
 
-    //encontra a e b para função de hash que não dê conflito
-    bool conflito = false;
-    do {
-      conflito = false;
-      nivelDois.a = get_numero_aleatorio_entre(0, nivelUm.primo);
-      nivelDois.b = get_numero_aleatorio_entre(1, nivelUm.primo);
-      // printf("LOG - TENTANDO NOVA FUNCAO DE HASH - A: %d - B: %d\n", nivelDois.a, nivelDois.b);
-      bool chavesAntigas[VALOR_MAXIMO_CHAVE] = {false};
-      FILE* arquivo_registros = abre_arquivo(get_nome_arquivo_registros(posicaoNivelUm), "r");
-      int posicaoNivelDois = hash(nivelUm.primo, nivelDois.tamanho, nivelDois.a, nivelDois.b, registro->dados.chave);
-      chavesAntigas[posicaoNivelDois] = true;
-      // printf("LOG - POSICAO NIVEL DOIS: %d\n", posicaoNivelDois);
-      int i;
-      for (i = 0; i < tamanhoAntigo; i++)
-      {
-        Registro registroAMover;
-        fread(&registroAMover, sizeof(Registro), 1, arquivo_registros);
-        if (registroAMover.ocupado)
-        {
-          int posicaoNivelDois = hash(nivelUm.primo, nivelDois.tamanho, nivelDois.a, nivelDois.b, registroAMover.dados.chave);
-          // printf("LOG - POSICAO NIVEL DOIS: %d\n", posicaoNivelDois);
-          if (chavesAntigas[posicaoNivelDois])
-          {
-            conflito = true;
-            break;
-          }
-          chavesAntigas[posicaoNivelDois] = true;
-        }
-      }
-      fclose(arquivo_registros);
-      // fprintf(stderr, "LOG - CONFLITO: %d\n", conflito);
-    } while (conflito);
-    // printf("LOG - FUNCAO DE HASH ENCONTRADA - A: %d - B: %d\n", nivelDois.a, nivelDois.b);
-    //mover de um arquivo para o outro
+  // salva a função de hashing de nivel dois com novos valores de a, b e tamanho
+  fseek(arquivo_funcoes_hash, sizeof(NivelUm) + sizeof(NivelDois) * posicaoNivelUm, SEEK_SET);
+  fwrite(&nivelDois, sizeof(NivelDois), 1, arquivo_funcoes_hash);
+  fclose(arquivo_funcoes_hash);
+  
+  FILE* arquivo_registros = abre_arquivo(get_nome_arquivo_registros(posicaoNivelUm), "r");
+  FILE* arquivo_registros_novo = cria_arquivo_de_registros(get_nome_arquivo_registros_temp(posicaoNivelUm), nivelDois.tamanho);
+  int posicaoNivelDois;
+
+  // salva novo registro no novo arquivo de registros
+  posicaoNivelDois = hash(nivelUm.primo, nivelDois.tamanho, nivelDois.a, nivelDois.b, registro->dados.chave);
+  fseek(arquivo_registros_novo, sizeof(Registro) * posicaoNivelDois, SEEK_SET);
+  fwrite(registro, sizeof(Registro), 1, arquivo_registros_novo);
+
+  // loop que salva os registros no novo arquivo de registros
+  for (int i = 0; i < tamanhoAntigo; i++)
+  {
+    Registro registroAMover;
+    fread(&registroAMover, sizeof(Registro), 1, arquivo_registros);
+    if (registroAMover.ocupado == true) {
+      posicaoNivelDois = hash(nivelUm.primo, nivelDois.tamanho, nivelDois.a, nivelDois.b, registroAMover.dados.chave);
+      fseek(arquivo_registros_novo, sizeof(Registro) * posicaoNivelDois, SEEK_SET);
+      fwrite(&registroAMover, sizeof(Registro), 1, arquivo_registros_novo);
+    }
+  }
+
+  fclose(arquivo_registros);
+  fclose(arquivo_registros_novo);
+
+  // remove o arquivo de registros antigo e substitui pelo novo
+  remove(get_nome_arquivo_registros(posicaoNivelUm));
+  rename(get_nome_arquivo_registros_temp(posicaoNivelUm), get_nome_arquivo_registros(posicaoNivelUm));
+}
+
+// encontra a e b para a função de hashing de nivel dois, onde não há colisão
+void encontra_a_b(NivelUm* nivelUm, NivelDois* nivelDois, Registro* registro, int posicaoNivelUm, int tamanhoAntigo) {
+  bool conflito = false;
+  do {
+    conflito = false;
+    nivelDois->a = get_numero_aleatorio_entre(0, nivelUm->primo);
+    nivelDois->b = get_numero_aleatorio_entre(1, nivelUm->primo);
+    bool chavesAntigas[VALOR_MAXIMO_CHAVE] = {false};
     FILE* arquivo_registros = abre_arquivo(get_nome_arquivo_registros(posicaoNivelUm), "r");
-    FILE* arquivo_registros_novo = cria_arquivo_de_registros(get_nome_arquivo_registros_temp(posicaoNivelUm), nivelDois.tamanho);
-    int posicaoNivelDois;
-    posicaoNivelDois = hash(nivelUm.primo, nivelDois.tamanho, nivelDois.a, nivelDois.b, registro->dados.chave);
-    fseek(arquivo_registros_novo, sizeof(Registro) * posicaoNivelDois, SEEK_SET);
-    fwrite(registro, sizeof(Registro), 1, arquivo_registros_novo);
-    int i;
-    for (i = 0; i < tamanhoAntigo; i++)
+    int posicaoNivelDois = hash(nivelUm->primo, nivelDois->tamanho, nivelDois->a, nivelDois->b, registro->dados.chave);
+    chavesAntigas[posicaoNivelDois] = true;
+
+    for (int i = 0; i < tamanhoAntigo; i++)
     {
       Registro registroAMover;
       fread(&registroAMover, sizeof(Registro), 1, arquivo_registros);
-      if (registroAMover.ocupado == true) {
-        posicaoNivelDois = hash(nivelUm.primo, nivelDois.tamanho, nivelDois.a, nivelDois.b, registroAMover.dados.chave);
-        fseek(arquivo_registros_novo, sizeof(Registro) * posicaoNivelDois, SEEK_SET);
-        fwrite(&registroAMover, sizeof(Registro), 1, arquivo_registros_novo);
+      if (registroAMover.ocupado)
+      {
+        int posicaoNivelDois = hash(nivelUm->primo, nivelDois->tamanho, nivelDois->a, nivelDois->b, registroAMover.dados.chave);
+        // printf("LOG - POSICAO NIVEL DOIS: %d\n", posicaoNivelDois);
+        if (chavesAntigas[posicaoNivelDois])
+        {
+          conflito = true;
+          break;
+        }
+        chavesAntigas[posicaoNivelDois] = true;
       }
     }
     fclose(arquivo_registros);
-    fclose(arquivo_registros_novo);
-    remove(get_nome_arquivo_registros(posicaoNivelUm));
-    rename(get_nome_arquivo_registros_temp(posicaoNivelUm), get_nome_arquivo_registros(posicaoNivelUm));
-
-    fseek(arquivo_funcoes_hash, sizeof(NivelUm) + sizeof(NivelDois) * posicaoNivelUm, SEEK_SET);
-    fwrite(&nivelDois, sizeof(NivelDois), 1, arquivo_funcoes_hash);
-    fclose(arquivo_funcoes_hash);
-  }
+    // fprintf(stderr, "LOG - CONFLITO: %d\n", conflito);
+  } while (conflito);
 }
 
 void consulta_registro() {
@@ -395,10 +395,10 @@ FILE* cria_arquivo_de_registros(char* nome, int tamanho){
   // }
 
   arquivo = abre_arquivo(nome, "w+");
-  int i;
+
   Registro registro;
   registro.ocupado = false;
-  for (i = 0; i < tamanho; i++) {
+  for (int i = 0; i < tamanho; i++) {
     fwrite(&registro, sizeof(Registro), 1, arquivo);
   }
   fseek(arquivo, 0, SEEK_SET);
@@ -407,8 +407,8 @@ FILE* cria_arquivo_de_registros(char* nome, int tamanho){
 
 int proximo_primo(int n){
   int primos[26] = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101};
-  int i;
-  for (i = 0; i < 26; i++) {
+
+  for (int i = 0; i < 26; i++) {
     if (primos[i] > n) {
       return primos[i];
     }
