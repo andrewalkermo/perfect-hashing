@@ -1,0 +1,24 @@
+estrutura de hashing perfeito criada
+chave: 72
+nome nove
+82
+chave nao encontrada: 55
+hashing perfeito: primeiro nivel
+tamanho da tabela: 9
+parametro a: 3
+parametro b: 42
+numero primo: 101
+0: 10
+2: 60 72 75
+5: 70
+7: 40 52 22 37
+hashing perfeito: segundo nivel - indice: 7
+tamanho da tabela: 16
+parametro a: 23
+parametro b: 88
+numero primo: 101
+3: 40
+8: 52
+9: 22
+14: 37
+10100
