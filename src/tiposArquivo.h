@@ -3,7 +3,7 @@
 
 #define TAMANHO_NOME 21
 #define VALOR_MAXIMO_CHAVE 100
-#define NOME_ARQUIVO_FUNCOES "data_funcoes_hashing.bin"
+#define NOME_ARQUIVO_FUNCOES "data_funcoes_hashing.dat"
 
 #define INSERE_REGISTROS 'i'
 #define CONSULTA_REGISTRO 'c'

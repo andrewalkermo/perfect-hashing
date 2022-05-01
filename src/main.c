@@ -371,12 +371,12 @@ int hash(int p, int m, int a, int b, int k) {
 
 char* get_nome_arquivo_registros(int posicao) {
   char* nomeArquivo = malloc(sizeof(char) * 100);
-  sprintf(nomeArquivo, "data_registros_%d.bin", posicao);
+  sprintf(nomeArquivo, "data_registros_%d.dat", posicao);
   return nomeArquivo;
 }
 
 char* get_nome_arquivo_registros_temp(int posicao) {
   char* nomeArquivo = malloc(sizeof(char) * 100);
-  sprintf(nomeArquivo, "data_registros_%d_tmp.bin", posicao);
+  sprintf(nomeArquivo, "data_registros_%d_tmp.dat", posicao);
   return nomeArquivo;
 }
