@@ -5,6 +5,9 @@
 #define VALOR_MAXIMO_CHAVE 100
 #define NOME_ARQUIVO_FUNCOES "data_funcoes_hashing.dat"
 
+#define TEST_A -1
+#define TEST_B -1
+
 #define INSERE_REGISTROS 'i'
 #define CONSULTA_REGISTRO 'c'
 #define IMPRIME_NIVEL_UM 'p'

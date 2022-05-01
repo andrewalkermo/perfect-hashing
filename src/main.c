@@ -66,8 +66,8 @@ void cria_arquivo_de_funcoes(int tamanho, int primo){
   NivelUm nivelUm;
   nivelUm.tamanho = tamanho;
   nivelUm.primo = primo;
-  nivelUm.a = get_numero_aleatorio_entre(0, primo);
-  nivelUm.b = get_numero_aleatorio_entre(1, primo);
+  nivelUm.a = TEST_A != -1 ? TEST_A : get_numero_aleatorio_entre(0, primo);
+  nivelUm.b = TEST_B != -1 ? TEST_B : get_numero_aleatorio_entre(1, primo);
 
   fwrite(&nivelUm, sizeof(NivelUm), 1, arquivo);
 
