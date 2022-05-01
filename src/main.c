@@ -3,46 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
-
-#define TAMANHO_NOME 21
-#define VALOR_MAXIMO_CHAVE 100
-#define NOME_ARQUIVO_FUNCOES "data_funcoes_hashing.bin"
-
-#define INSERE_REGISTROS 'i'
-#define CONSULTA_REGISTRO 'c'
-#define IMPRIME_NIVEL_UM 'p'
-#define IMPRIME_NIVEL_DOIS 's'
-#define IMPRIME_ESTRUTURA_GLOBAL 'h'
-#define CARDINALIDADE_FUNCOES_HASHING 'n'
-#define FIM_DOS_COMANDOS 'e'
-
-typedef struct DadosUsuario DadosUsuario;
-typedef struct NivelUm NivelUm;
-typedef struct NivelDois NivelDois;
-typedef struct Registro Registro;
-
-struct NivelUm{
-  int tamanho;
-  int primo;
-  int a;
-  int b;
-};
-struct NivelDois{
-  int tamanho;
-  int a;
-  int b;
-};
-
-struct DadosUsuario{
-  int chave;
-  char nome[TAMANHO_NOME];
-  int idade;
-};
-
-struct Registro{
-  bool ocupado;
-  DadosUsuario dados;
-};
+#include "tiposArquivo.h"
 
 void insere_registros();
 void consulta_registro();
@@ -99,10 +60,6 @@ int main() {
 
 void cria_arquivo_de_funcoes(int tamanho, int primo){
   FILE *arquivo;
-  // if (arquivo = fopen(NOME_ARQUIVO_FUNCOES, "r")) {
-  //   fclose(arquivo);
-  //   return;
-  // }
 
   arquivo = abre_arquivo(NOME_ARQUIVO_FUNCOES, "w+");
 
@@ -380,10 +337,6 @@ FILE *abre_arquivo(char *nomeArquivo, char *modo){
 FILE* cria_arquivo_de_registros(char* nome, int tamanho){
   FILE *arquivo;
   
-  // if (arquivo = fopen(nome, "r")) {
-  //   return arquivo;
-  // }
-
   arquivo = abre_arquivo(nome, "w+");
 
   Registro registro;
