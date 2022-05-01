@@ -134,12 +134,13 @@ void insere_registros() {
     Registro novoRegistro;
     novoRegistro.ocupado = true;
     scanf("%d", &novoRegistro.dados.chave);
+    getchar();
     if (i == 0) {
       int primo = proximo_primo(novoRegistro.dados.chave);
       cria_arquivo_de_funcoes(tamanho, primo);
     }
+    fgets(novoRegistro.dados.nome, TAMANHO_NOME, stdin);
     
-    scanf("%s", novoRegistro.dados.nome);
     scanf("%d", &novoRegistro.dados.idade);
     insere_registro(&novoRegistro);
   }
@@ -265,7 +266,7 @@ void consulta_registro() {
 
   if (registro.ocupado == true && registro.dados.chave == chave) {
     printf("chave: %d\n", registro.dados.chave);
-    printf("%s\n", registro.dados.nome);
+    printf("%s", registro.dados.nome);
     printf("%d\n", registro.dados.idade);
   } else {
     printf("chave nao encontrada: %d\n", chave);
