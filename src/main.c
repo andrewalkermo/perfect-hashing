@@ -25,6 +25,7 @@ FILE *abre_arquivo(char *nomeArquivo, char *modo);
 FILE* cria_arquivo_de_registros(char* nome, int tamanho);
 
 int main() {
+  // seed para gerar numeros aleatorios
   srand(time(NULL));
   
   char comando;
@@ -58,6 +59,10 @@ int main() {
   return 0;
 }
 
+// cria arquivo de funções de hashing, com N+1 funções
+// onde N é o tamanho do arquivo de registros
+// o indice 0 é a função de hashing padrãode nivel 1
+// os indices 1 a N são as funções de hashing de nivel 2
 void cria_arquivo_de_funcoes(int tamanho, int primo){
   FILE *arquivo;
 
@@ -130,6 +135,7 @@ void insere_registro(Registro* registro) {
   nivelDois.a = get_numero_aleatorio_entre(0, nivelUm.primo);
   nivelDois.b = get_numero_aleatorio_entre(1, nivelUm.primo);
   
+  // cria o arquivo de registros, se for o primeiro registro, e lê o registro, ou se não, lê o o arquivo existente
   FILE* arquivo_registros;
   if (tamanhoAntigo == 0) {
     arquivo_registros = cria_arquivo_de_registros(get_nome_arquivo_registros(posicaoNivelUm), nivelDois.tamanho);
@@ -154,10 +160,12 @@ void insere_registro(Registro* registro) {
     if (registroAMover.ocupado == true) {
       posicaoNivelDois = hash(nivelUm.primo, nivelDois.tamanho, nivelDois.a, nivelDois.b, registroAMover.dados.chave);
 
+      // lê o registro na posição a ser movida, no arquivo de registros novo
       Registro registroJaMovido;
       fseek(arquivo_registros_novo, sizeof(Registro) * posicaoNivelDois, SEEK_SET);
       fread(&registroJaMovido, sizeof(Registro), 1, arquivo_registros_novo);
 
+      // se a posição estiver vazia, salva o registro, se não, tenta inserir novamente, recursivamente
       if (registroJaMovido.ocupado == false) {
         fseek(arquivo_registros_novo, sizeof(Registro) * posicaoNivelDois, SEEK_SET);
         fwrite(&registroAMover, sizeof(Registro), 1, arquivo_registros_novo);
@@ -191,26 +199,32 @@ void consulta_registro() {
   NivelUm nivelUm;
   NivelDois nivelDois;
 
+  // lê a função de hashing e pega a posição do nivel um
   FILE* arquivo_funcoes_hash = abre_arquivo(NOME_ARQUIVO_FUNCOES, "r");
   fread(&nivelUm, sizeof(NivelUm), 1, arquivo_funcoes_hash);
   int posicaoNivelUm = hash(nivelUm.primo, nivelUm.tamanho, nivelUm.a, nivelUm.b, chave);
 
+  // lê a função de hashing e pega a posição do nivel dois
   fseek(arquivo_funcoes_hash, sizeof(NivelUm) + sizeof(NivelDois) * posicaoNivelUm, SEEK_SET);
   fread(&nivelDois, sizeof(NivelDois), 1, arquivo_funcoes_hash);
   fclose(arquivo_funcoes_hash);
   
+  // se o tamanho do nivel dois for 0, não existe registro com a chave
   if (nivelDois.tamanho == 0) {
     printf("chave nao encontrada: %d\n", chave);
     return;
   }
 
+  // abre o arquivo de registros
   int posicaoNivelDois = hash(nivelUm.primo, nivelDois.tamanho, nivelDois.a, nivelDois.b, chave);
   FILE* arquivo_registros = abre_arquivo(get_nome_arquivo_registros(posicaoNivelUm), "r");
   fseek(arquivo_registros, sizeof(Registro) * posicaoNivelDois, SEEK_SET);
 
+  // lê o registro
   Registro registro;
   fread(&registro, sizeof(Registro), 1, arquivo_registros);
 
+  // printa o registro, caso exista
   if (registro.ocupado == true && registro.dados.chave == chave) {
     printf("chave: %d\n", registro.dados.chave);
     printf("%s", registro.dados.nome);
@@ -226,11 +240,15 @@ void imprime_nivel_um() {
   FILE* arquivo_funcoes_hash = abre_arquivo(NOME_ARQUIVO_FUNCOES, "r");
   NivelUm nivelUm;
   fread(&nivelUm, sizeof(NivelUm), 1, arquivo_funcoes_hash);
+
+  //impreme o nivel um
   printf("hashing perfeito: primeiro nivel\n");
   printf("tamanho da tabela: %d\n", nivelUm.tamanho);
   printf("parametro a: %d\n", nivelUm.a);
   printf("parametro b: %d\n", nivelUm.b);
   printf("numero primo: %d\n", nivelUm.primo);
+
+  // loop para imprimir as chances existentes no nivel dois de cada indice
   for (int i = 0; i < nivelUm.tamanho; i++) {
     NivelDois nivelDois;
     fread(&nivelDois, sizeof(NivelDois), 1, arquivo_funcoes_hash);
@@ -258,27 +276,32 @@ void imprime_nivel_dois() {
   FILE* arquivo_funcoes_hash = abre_arquivo(NOME_ARQUIVO_FUNCOES, "r");
   NivelUm nivelUm;
   fread(&nivelUm, sizeof(NivelUm), 1, arquivo_funcoes_hash);
+
+  // loop para imprimir as chaves existentes no nivel dois de cada indice
   for (int i = 0; i < nivelUm.tamanho; i++) {
     NivelDois nivelDois;
     fread(&nivelDois, sizeof(NivelDois), 1, arquivo_funcoes_hash);
-    if (nivelDois.tamanho > 0)
-    {
-      if (nivelDois.tamanho > 1) {
-        FILE *arquivo_registros = abre_arquivo(get_nome_arquivo_registros(i), "r");
-        Registro registro;
-        printf("hashing perfeito: segundo nivel - indice: %d\n", i);
-        printf("tamanho da tabela: %d\n", nivelDois.tamanho);
-        printf("parametro a: %d\n", nivelDois.a);
-        printf("parametro b: %d\n", nivelDois.b);
-        printf("numero primo: %d\n", nivelUm.primo);
-        for (int j = 0; j < nivelDois.tamanho; j++) {
-          fread(&registro, sizeof(Registro), 1, arquivo_registros);
-          if (registro.ocupado) {
-            printf("%d: %d\n", j, registro.dados.chave);
-          }
+    
+    if (nivelDois.tamanho > 0) {
+      FILE *arquivo_registros = abre_arquivo(get_nome_arquivo_registros(i), "r");
+      Registro registro;
+
+      // imprime o nivel dois
+      printf("hashing perfeito: segundo nivel - indice: %d\n", i);
+      printf("tamanho da tabela: %d\n", nivelDois.tamanho);
+      printf("parametro a: %d\n", nivelDois.a);
+      printf("parametro b: %d\n", nivelDois.b);
+      printf("numero primo: %d\n", nivelUm.primo);
+
+      // loop para imprimir as chaves existentes no nivel dois de cada indice
+      for (int j = 0; j < nivelDois.tamanho; j++) {
+        fread(&registro, sizeof(Registro), 1, arquivo_registros);
+        if (registro.ocupado) {
+          printf("%d: %d\n", j, registro.dados.chave);
         }
-        fclose(arquivo_registros);
       }
+
+      fclose(arquivo_registros);
     }
   }
   fclose(arquivo_funcoes_hash);
@@ -288,11 +311,15 @@ void imprime_estrutura_global() {
   FILE* arquivo_funcoes_hash = abre_arquivo(NOME_ARQUIVO_FUNCOES, "r");
   NivelUm nivelUm;
   fread(&nivelUm, sizeof(NivelUm), 1, arquivo_funcoes_hash);
+
+  // imprime o nivel um
   printf("hashing perfeito: primeiro nivel\n");
   printf("tamanho da tabela: %d\n", nivelUm.tamanho);
   printf("parametro a: %d\n", nivelUm.a);
   printf("parametro b: %d\n", nivelUm.b);
   printf("numero primo: %d\n", nivelUm.primo);
+
+  // loop para imprimir as informacoes do nitel dois de cada indice
   for (int i = 0; i < nivelUm.tamanho; i++) {
     NivelDois nivelDois;
     fread(&nivelDois, sizeof(NivelDois), 1, arquivo_funcoes_hash);
@@ -300,11 +327,15 @@ void imprime_estrutura_global() {
     {
       FILE *arquivo_registros = abre_arquivo(get_nome_arquivo_registros(i), "r");
       Registro registro;
+
+      // imprime o nivel dois
       printf("hashing perfeito: segundo nivel - indice: %d\n", i);
       printf("tamanho da tabela: %d\n", nivelDois.tamanho);
       printf("parametro a: %d\n", nivelDois.a);
       printf("parametro b: %d\n", nivelDois.b);
       printf("numero primo: %d\n", nivelUm.primo);
+
+      // loop para imprimir as chaves de cada indice do nivel dois
       for (int j = 0; j < nivelDois.tamanho; j++) {
         fread(&registro, sizeof(Registro), 1, arquivo_registros);
         if (registro.ocupado) {
@@ -317,6 +348,7 @@ void imprime_estrutura_global() {
   fclose(arquivo_funcoes_hash);
 }
 
+// imprime a cardinalidade de do conjuntos de funções de hashing = primo * (primo - 1)
 void cardinalidade_funcoes_hashing() {
   FILE* arquivo_funcoes_hash = abre_arquivo(NOME_ARQUIVO_FUNCOES, "r");
   NivelUm nivelUm;
@@ -325,6 +357,7 @@ void cardinalidade_funcoes_hashing() {
   printf("%d\n", cardinalidade);
 }
 
+// retorna um arquivo, ou da erro se não conseguir abrir, com as permições informadas
 FILE *abre_arquivo(char *nomeArquivo, char *modo){
   FILE *arquivo;
   if (!(arquivo = fopen(nomeArquivo, modo))) {
@@ -334,6 +367,7 @@ FILE *abre_arquivo(char *nomeArquivo, char *modo){
   return arquivo;
 }
 
+// cria arquivo de registro em branco
 FILE* cria_arquivo_de_registros(char* nome, int tamanho){
   FILE *arquivo;
   
@@ -348,6 +382,7 @@ FILE* cria_arquivo_de_registros(char* nome, int tamanho){
   return arquivo;
 }
 
+// retorna o valor do proximo primo maior que o valor informado
 int proximo_primo(int n){
   int primos[26] = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101};
 
@@ -365,16 +400,20 @@ int get_numero_aleatorio_entre(int min, int max) {
   return (rand() % (max - min)) + min;
 }
 
+// função de hashing
 int hash(int p, int m, int a, int b, int k) {
   return ((a * k + b) % p) % m;
 }
 
+// retorna o nome do arquivo de registros, de acordo com o indice
 char* get_nome_arquivo_registros(int posicao) {
   char* nomeArquivo = malloc(sizeof(char) * 100);
   sprintf(nomeArquivo, "data_registros_%d.dat", posicao);
   return nomeArquivo;
 }
 
+
+// retorna o nome do arquivo de registros temporario, de acordo com o indice
 char* get_nome_arquivo_registros_temp(int posicao) {
   char* nomeArquivo = malloc(sizeof(char) * 100);
   sprintf(nomeArquivo, "data_registros_%d_tmp.dat", posicao);
