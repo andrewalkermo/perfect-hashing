@@ -277,32 +277,34 @@ void imprime_nivel_dois() {
   NivelUm nivelUm;
   fread(&nivelUm, sizeof(NivelUm), 1, arquivo_funcoes_hash);
 
-  // loop para imprimir as chaves existentes no nivel dois de cada indice
-  for (int i = 0; i < nivelUm.tamanho; i++) {
-    NivelDois nivelDois;
-    fread(&nivelDois, sizeof(NivelDois), 1, arquivo_funcoes_hash);
-    
-    if (nivelDois.tamanho > 0) {
-      FILE *arquivo_registros = abre_arquivo(get_nome_arquivo_registros(i), "r");
-      Registro registro;
+  int indice;
+  scanf("%d", &indice);
+  
+  NivelDois nivelDois;
 
-      // imprime o nivel dois
-      printf("hashing perfeito: segundo nivel - indice: %d\n", i);
-      printf("tamanho da tabela: %d\n", nivelDois.tamanho);
-      printf("parametro a: %d\n", nivelDois.a);
-      printf("parametro b: %d\n", nivelDois.b);
-      printf("numero primo: %d\n", nivelUm.primo);
+  fseek(arquivo_funcoes_hash, sizeof(NivelUm) + sizeof(NivelDois) * indice, SEEK_SET);
+  fread(&nivelDois, sizeof(NivelDois), 1, arquivo_funcoes_hash);
+  
+  if (nivelDois.tamanho > 0) {
+    FILE *arquivo_registros = abre_arquivo(get_nome_arquivo_registros(indice), "r");
+    Registro registro;
 
-      // loop para imprimir as chaves existentes no nivel dois de cada indice
-      for (int j = 0; j < nivelDois.tamanho; j++) {
-        fread(&registro, sizeof(Registro), 1, arquivo_registros);
-        if (registro.ocupado) {
-          printf("%d: %d\n", j, registro.dados.chave);
-        }
+    // imprime o nivel dois
+    printf("hashing perfeito: segundo nivel - indice: %d\n", indice);
+    printf("tamanho da tabela: %d\n", nivelDois.tamanho);
+    printf("parametro a: %d\n", nivelDois.a);
+    printf("parametro b: %d\n", nivelDois.b);
+    printf("numero primo: %d\n", nivelUm.primo);
+
+    // loop para imprimir as chaves existentes no nivel dois de cada indice
+    for (int j = 0; j < nivelDois.tamanho; j++) {
+      fread(&registro, sizeof(Registro), 1, arquivo_registros);
+      if (registro.ocupado) {
+        printf("%d: %d\n", j, registro.dados.chave);
       }
-
-      fclose(arquivo_registros);
     }
+
+    fclose(arquivo_registros);
   }
   fclose(arquivo_funcoes_hash);
 }
